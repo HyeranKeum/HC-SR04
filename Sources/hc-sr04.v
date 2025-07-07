@@ -25,6 +25,9 @@ module hc_sr04#(parameter ten_us = 10'd1000)(
   input echo, //JA1
   output trig, //JA2
   output reg [21:0] distanceRAW);
+  
+  reg [31:0] distance_cm;
+  
   localparam IDLE = 2'b00,
           TRIGGER = 2'b01,
              WAIT = 2'b11,
@@ -69,14 +72,13 @@ module hc_sr04#(parameter ten_us = 10'd1000)(
                 state <= (echo) ? state : IDLE;
               end
           endcase
-          
         end
     end
   
   //Trigger
   assign trig = inTRIGGER;
   
-  //Counter
+  //Counter -  sonic burst 트리거하기 위해 10us동안 high 출력하기
   always@(posedge clk)
     begin
       if(inIDLE)
@@ -98,6 +100,15 @@ module hc_sr04#(parameter ten_us = 10'd1000)(
       else
         distanceRAW <= distanceRAW + {21'd0, inCOUNTECHO};
     end
+
+
+  always @(posedge clk) begin
+    if (state == IDLE) begin
+      // 거리 계산은 echo 측정이 끝난 후 수행
+      distance_cm <= (distanceRAW * 17) / 100000;
+    end
+  end
+    
 endmodule
 
 module refresher250ms(
@@ -110,7 +121,9 @@ module refresher250ms(
 
   always@(posedge clk)
     begin
-      if(~en | (counter == 25'd25_000_000))
+      if(~en | (counter == 25'd12_500_000))
+      // en = 0
+      // en = 1 && counter = 0
         counter <= 25'd0;
       else
         counter <= 25'd1 + counter;
