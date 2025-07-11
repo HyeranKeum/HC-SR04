@@ -24,9 +24,9 @@ module hc_sr04#(parameter ten_us = 10'd1000)(
   //HC-SR04 signals
   input echo, //JA1
   output trig, //JA2
-  output reg [21:0] distanceRAW);
+  output reg [19:0] distance_cm);
+  reg [21:0] distanceRAW;
   
-  reg [31:0] distance_cm;
   
   localparam IDLE = 2'b00,
           TRIGGER = 2'b01,
